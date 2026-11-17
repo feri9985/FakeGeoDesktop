@@ -23,11 +23,19 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Build dmg
+      - name: Build app
         working-directory: FakeGeoDesktop
-        run: gradle packageDmg --no-daemon
+        run: gradle createDistributable --no-daemon
+
+      - name: Sign and make dmg
+        working-directory: FakeGeoDesktop
+        run: |
+          APP=build/compose/binaries/main/app/FakeGeo.app
+          codesign --force --deep --sign - "$APP"
+          mkdir dmgroot && cp -R "$APP" dmgroot/ && ln -s /Applications dmgroot/Applications
+          hdiutil create -volname FakeGeo -srcfolder dmgroot -ov -format UDZO FakeGeo.dmg
 
       - uses: actions/upload-artifact@v4
         with:
           name: FakeGeo-mac-dmg
-          path: FakeGeoDesktop/build/compose/binaries/main/dmg/*.dmg
+          path: FakeGeoDesktop/FakeGeo.dmg
